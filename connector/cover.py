@@ -104,47 +104,38 @@ class TwoWayDevice(CoordinatorEntity, CoverEntity):
     @property
     def is_closed(self):
         """Return if the cover is closed or not."""
-        print("调用了isClosed")
-        print(self._blind.position)
         return self._blind.position == 100
 
     @callback
     def _push_callback(self):
         """Update entity state when a push has been received."""
-        print("进入push callback")
         self.schedule_update_ha_state(force_refresh=False)
 
     async def async_added_to_hass(self):
         """Subscribe to multicast pushes."""
-        print("进入async_added_to_hass")
         self._blind.registerCallback(self._push_callback)
         await super().async_added_to_hass()
 
     async def async_will_remove_from_hass(self):
         """Unsubscribe when removed."""
-        print("进入async_will_remove_from_hass")
         self._blind.removeCallback()
         return super().async_will_remove_from_hass()
 
     @property
     def current_cover_position(self):
         """return the current position"""
-        print("调用了current cover position")
         return 100 - self._blind.position
 
     def open_cover(self, **kwargs):
         """Open the cover."""
-        print("进入电机上行命令")
         self._blind.Open()
 
     def close_cover(self, **kwargs):
         """Close cover."""
-        print("进入电机关闭命令")
         self._blind.Close()
 
     def set_cover_position(self, **kwargs):
         """Move the cover to a specific position."""
-        print("进入电机百分比控制命令")
         position = kwargs[ATTR_POSITION]
         self._blind.TargetPosition(100-position)
 
@@ -231,42 +222,34 @@ class OneWayDevice(CoordinatorEntity, CoverEntity):
     @property
     def is_closed(self):
         """Return if the cover is closed or not."""
-        print("调用了isClosed")
-        print(self._blind.position)
         return self._blind.position == 100
 
     @callback
     def _push_callback(self):
         """Update entity state when a push has been received."""
-        print("进入push callback")
         self.schedule_update_ha_state(force_refresh=False)
 
     async def async_added_to_hass(self):
         """Subscribe to multicast pushes."""
-        print("进入async_added_to_hass")
         self._blind.registerCallback(self._push_callback)
         await super().async_added_to_hass()
 
     async def async_will_remove_from_hass(self):
         """Unsubscribe when removed."""
-        print("进入async_will_remove_from_hass")
         self._blind.removeCallback()
         return super().async_will_remove_from_hass()
 
     @property
     def current_cover_position(self):
         """return the current position"""
-        print("调用了current cover position")
         return 50
 
     def open_cover(self, **kwargs):
         """Open the cover."""
-        print("进入电机上行命令")
         self._blind.Open()
 
     def close_cover(self, **kwargs):
         """Close cover."""
-        print("进入电机关闭命令")
         self._blind.Close()
 
     def stop_cover(self, **kwargs):

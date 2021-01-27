@@ -96,7 +96,7 @@ class ConnectorHub:
                 else:
                     pass
             except Exception as e:
-                print(e)
+                _LOGGER.warning(e)
                 pass
 
     def GetDeviceListAck(self, data):
@@ -113,7 +113,6 @@ class ConnectorHub:
 
     def Report(self, data):
         """return the hub mac"""
-        print("进入了report")
         hub_mac = data['mac'][:12]
         blind_mac = data['mac']
         currentPosition = data['data']['currentPosition']
@@ -177,7 +176,6 @@ class Hub:
         # self._blinds = {}
 
     def add_blinds(self, blind):
-        print("添加设备")
         mac = blind['mac']
         if blind['data']['wirelessMode'] in one_way_wirelessMode:
             self._blinds[mac] = OneWayBlind(mac=blind['mac'],
@@ -264,7 +262,6 @@ class OneWayBlind:
 
     def registerCallback(self, func):
         """register the callback"""
-        print("进入了注册callback")
         self._callBack = func
 
     def removeCallback(self):
@@ -273,7 +270,6 @@ class OneWayBlind:
 
     def runCallback(self):
         """run the call back function"""
-        print("进入了运行callback")
         if self._callBack is None:
             _LOGGER.warning("This blind not register callback function")
             return
@@ -292,7 +288,6 @@ class TwoWayBlind:
         self._callBack = None
         self._type = type
         self._angle = angle
-        print("添加了双向设备")
 
     def Open(self):
         operation = {"operation": 1}
@@ -373,7 +368,6 @@ class TwoWayBlind:
 
     def registerCallback(self, func):
         """register the callback"""
-        print("进入了注册callback")
         self._callBack = func
 
     def removeCallback(self):
@@ -382,7 +376,6 @@ class TwoWayBlind:
 
     def runCallback(self):
         """run the call back function"""
-        print("进入了运行callback")
         if self._callBack is None:
             _LOGGER.warning("This blind not register callback function")
             return

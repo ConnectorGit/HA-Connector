@@ -1,0 +1,14 @@
+{
+  "domain": "connector",
+  "name": "connector",
+  "config_flow": true,
+  "documentation": "https://www.home-assistant.io/integrations/connector",
+  "requirements": [],
+  "ssdp": [],
+  "zeroconf": [],
+  "homekit": {},
+  "dependencies": [],
+  "codeowners": [
+    "@lucas"
+  ]
+}

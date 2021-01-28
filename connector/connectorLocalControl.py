@@ -23,7 +23,7 @@ bufferSize = 2048
 one_way_wirelessMode = [0, 2]
 two_way_wirelessMode = [1, 3, 4]
 
-s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+# s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
 
 
 def getMsgId():
@@ -33,7 +33,11 @@ def getMsgId():
 
 
 def sendData(data):
-    s.sendto(bytes(json.dumps(data), 'utf-8'), (udpIpAddress, sendPort))
+    try:
+        s.sendto(bytes(json.dumps(data), 'utf-8'), (udpIpAddress, sendPort))
+    except Exception as e:
+        print(e)
+        pass
 
 
 class ConnectorHub:
@@ -49,10 +53,12 @@ class ConnectorHub:
         self.s = None
         self.ANY = "0.0.0.0"
         self._deviceList = {}
+        self._listening = False
 
     def _joinGroupControl(self):
         try:
-            # s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+            global s
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             s.bind((self.ANY, receivePort))
             s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 255)
@@ -64,10 +70,11 @@ class ConnectorHub:
             s.setblocking(True)
         except OSError:
             _LOGGER.error("Port is occupied")
+            s.close()
         except Exception as e:
             _LOGGER.error(e)
         else:
-            _LOGGER.info("连接端口成功")
+            _LOGGER.info("open port success")
 
     def _get_access_token(self, token):
         """To get the accessToken"""
@@ -83,9 +90,7 @@ class ConnectorHub:
         return self._accessToken
 
     def _receive_data(self):
-        while True:
-            if self._exit_thread:
-                break
+        while not self._exit_thread:
             try:
                 data, address = s.recvfrom(2048)
                 data_json = json.loads(data.decode("UTF-8"))
@@ -96,8 +101,9 @@ class ConnectorHub:
                 else:
                     pass
             except Exception as e:
-                _LOGGER.warning(e)
-                pass
+                _LOGGER.info(e)
+                break
+        s.close()
 
     def GetDeviceListAck(self, data):
         self._get_access_token(data['token'])
@@ -129,16 +135,21 @@ class ConnectorHub:
                 "AccessToken": self._accessToken}
         sendData(data)
 
-    def close_receive_data(self):
-        self._exit_thread = True
-        s.close()
-
     def start_receive_data(self):
-        self._joinGroupControl()
-        self._exit_thread = False
-        self._thread01 = Thread(target=self._receive_data)
-        self._thread01.start()
-        self.get_device_list()
+        if self._listening:
+            _LOGGER.info("32101 is listening")
+        else:
+            self._listening = True
+            self._joinGroupControl()
+            self._exit_thread = False
+            self._thread01 = Thread(target=self._receive_data)
+            self._thread01.start()
+            self.get_device_list()
+
+    def close_receive_data(self):
+        # s.close()
+        self._listening = False
+        self._exit_thread = True
 
     def _isMacInList(self, mac):
         """Is the mac address in the list?"""
@@ -213,6 +224,13 @@ class Hub:
     def blinds(self):
         """return blinds list"""
         return self._blinds
+
+    def updateBlinds(self):
+        """update the position of the blinds"""
+        for device in self._blinds.values():
+            if device.wirelessMode in two_way_wirelessMode:
+                device.updateState()
+                time.sleep(2)
 
 
 class OneWayBlind:
@@ -315,9 +333,9 @@ class TwoWayBlind:
         self._WriteDevice(operation)
 
     def updateState(self):
+        """update the position of the blind"""
         operation = {"operation": 5}
         self._WriteDevice(operation)
-        pass
 
     def _WriteDevice(self, operation):
         data = {"msgType": "WriteDevice",
@@ -383,11 +401,26 @@ class TwoWayBlind:
 
 
 # if __name__ == "__main__":
-#     hub = ConnectorHub(key="83680a64-15f4-40", ip=["192.168.31.69", "192.168.50.50"])
-#     hub.start_receive_data()
-#     hubs = hub.deviceList
+#     connector = ConnectorHub(key="5acb1823-d7ff-46", ip=["192.168.31.177", "192.168.50.50"])
+#     connector.start_receive_data()
+#     hubs = connector.deviceList
 #     print("hubs:", hubs)
 #     for hub in hubs.values():
 #         for blind in hub.blinds.values():
 #             print(hub.blinds)
 #             blind.Open()
+#     for hub in hubs.values():
+#         hub.updateBlinds()
+#     connector.close_receive_data()
+#
+#     # time.sleep(5)
+#     connector = ConnectorHub(key="5acb1823-d7ff-46", ip=["192.168.31.177", "192.168.50.50"])
+#     connector.start_receive_data()
+#     hubs = connector.deviceList
+#     print("hubs:", hubs)
+#     for hub in hubs.values():
+#         for blind in hub.blinds.values():
+#             print(hub.blinds)
+#             blind.Open()
+#     for hub in hubs.values():
+#         hub.updateBlinds()

@@ -24,10 +24,10 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up the Motion Blind from a config entry."""
     entities = []
-    hubs = hass.data[DOMAIN][config_entry.entry_id][KEY_GATEWAY]
+    connector = hass.data[DOMAIN][config_entry.entry_id][KEY_GATEWAY]
     coordinator = hass.data[DOMAIN][config_entry.entry_id][KEY_COORDINATOR]
 
-    for hub in hubs.values():
+    for hub in connector.deviceList.values():
         for blind in hub.blinds.values():
             if blind.wirelessMode in one_way_wirelessMode:
                 entities.append(

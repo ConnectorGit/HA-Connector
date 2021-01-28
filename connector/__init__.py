@@ -2,12 +2,13 @@
 import asyncio
 from datetime import timedelta
 
+import time
 import voluptuous as vol
 import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from .connectorLocalControl import ConnectorHub
-from homeassistant.const import CONF_API_KEY, CONF_HOST
+from homeassistant.const import CONF_API_KEY, CONF_HOST, EVENT_HOMEASSISTANT_STOP
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers import device_registry as dr
 
@@ -31,30 +32,54 @@ async def async_setup(hass: HomeAssistant, config: dict):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up connector from a config entry."""
+    time.sleep(5)
     hass.data.setdefault(DOMAIN, {})
     host = entry.data[CONF_HOST]
     key = entry.data[CONF_API_KEY]
-    hub = connectorLocalControl.ConnectorHub(ip=host, key=key)
-    hub.start_receive_data()
-    hubs = hub.deviceList
+    connector = connectorLocalControl.ConnectorHub(ip=host, key=key)
+
+    if KEY_MULTICAST_LISTENER not in hass.data[DOMAIN]:
+        connector.start_receive_data()
+        multicast = connector
+        hass.data[DOMAIN][KEY_MULTICAST_LISTENER] = multicast
+
+        # register stop callback to shutdown listening for local pushes
+        def stop_motion_multicast(event):
+            """Stop multicast thread."""
+            _LOGGER.debug("Shutting down Connector Listener")
+            multicast.close_receive_data()
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, stop_motion_multicast)
+
+    def update_gateway():
+        """Call all updates using one async_add_executor_job."""
+        for device in connector.deviceList.values():
+            try:
+                device.updateBlinds()
+            except timeout:
+                pass
+
+    async def async_update_data():
+        """Fetch data from the gateway and blinds."""
+        try:
+            await hass.async_add_executor_job(update_gateway)
+        except timeout:
+            pass
 
     coordinator = DataUpdateCoordinator(
         hass,
         _LOGGER,
-        # Name of the data. For logging purposes.
         name=entry.title,
-        # update_method=async_update_data,
-        # Polling interval. Will only be polled if there are subscribers.
-        update_interval=timedelta(seconds=600),
+        update_method=async_update_data,
+        update_interval=timedelta(seconds=60),
     )
 
     hass.data[DOMAIN][entry.entry_id] = {
-        KEY_GATEWAY: hubs,
+        KEY_GATEWAY: connector,
         KEY_COORDINATOR: coordinator,
     }
 
     device_registry = await dr.async_get_registry(hass)
-    for hub in hubs.values():
+    for hub in connector.deviceList.values():
         device_registry.async_get_or_create(
             config_entry_id=entry.entry_id,
             connections={(dr.CONNECTION_NETWORK_MAC, hub.hub_mac)},
@@ -89,6 +114,5 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     if len(hass.data[DOMAIN]) == 1:
         _LOGGER.debug("Shutting down Connector Listener")
         multicast = hass.data[DOMAIN].pop(KEY_MULTICAST_LISTENER)
-        await hass.async_add_executor_job(multicast.Stop_listen)
-
+        await hass.async_add_executor_job(multicast.close_receive_data)
     return unload_ok

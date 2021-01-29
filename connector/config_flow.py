@@ -81,8 +81,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self.host = user_input[CONF_HOST].split("&")
             self.key = user_input[CONF_API_KEY]
-            _LOGGER.info("host:", self.host)
-            _LOGGER.info("key:", self.key)
+            # _LOGGER.info("host:", self.host)
+            # _LOGGER.info("key:", self.key)
             return await self.async_step_connect()
 
         return self.async_show_form(

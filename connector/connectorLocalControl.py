@@ -36,7 +36,7 @@ def sendData(data):
     try:
         s.sendto(bytes(json.dumps(data), 'utf-8'), (udpIpAddress, sendPort))
     except Exception as e:
-        print(e)
+        _LOGGER.info(e)
         pass
 
 

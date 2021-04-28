@@ -8,7 +8,14 @@ import logging
 import socket
 import json
 import datetime
-from Cryptodome.Cipher import AES
+import platform
+sys = platform.system()
+if sys == "Windows":
+    from Cryptodome.Cipher import AES
+elif sys == "Linux":
+    from Crypto.Cipher import AES
+else:
+    pass
 from threading import Thread
 import time
 
@@ -163,6 +170,7 @@ class ConnectorHub:
         """Get device list"""
         data = {"msgType": "GetDeviceList", "msgID": getMsgId()}
         self._deviceList = {}
+        time.sleep(1)
         sendData(data)
 
     def blindType(self, mac):

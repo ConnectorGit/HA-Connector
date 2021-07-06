@@ -128,11 +128,12 @@ class ConnectorHub:
         """return the hub mac"""
         hub_mac = data['mac'][:12]
         blind_mac = data['mac']
-        currentPosition = data['data']['currentPosition']
-        currentAngle = data['data']['currentAngle']
-        self._deviceList[hub_mac].blinds[blind_mac].setAngle(currentAngle)
-        self._deviceList[hub_mac].blinds[blind_mac].setPosition(currentPosition)
-        self._deviceList[hub_mac].blinds[blind_mac].runCallback()
+        if data['data']['wirelessMode'] in two_way_wirelessMode:   # Because only two way blind have position and angle
+            currentPosition = data['data']['currentPosition']
+            currentAngle = data['data']['currentAngle']
+            self._deviceList[hub_mac].blinds[blind_mac].setAngle(currentAngle)
+            self._deviceList[hub_mac].blinds[blind_mac].setPosition(currentPosition)
+            self._deviceList[hub_mac].blinds[blind_mac].runCallback()
 
     def _get_device_info(self, mac, deviceType):
         data = {"msgType": "ReadDevice",

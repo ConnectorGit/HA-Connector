@@ -12,3 +12,7 @@
 6) Now refresh your browser page (hit F5)
 7) If you now click the "+" icon you can search for "Connector" and it should appear in the list
 8) Click it and go through the setup of your Connector.
+
+
+Note:
+1) One way blind only support open close and stop

@@ -222,7 +222,8 @@ class OneWayDevice(CoordinatorEntity, CoverEntity):
     @property
     def is_closed(self):
         """Return if the cover is closed or not."""
-        return self._blind.position == 100
+        # return self._blind.position == 100
+        return True
 
     @callback
     def _push_callback(self):

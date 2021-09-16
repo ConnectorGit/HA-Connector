@@ -2,6 +2,7 @@
   "domain": "connector",
   "name": "connector",
   "config_flow": true,
+  "version": "1.0.0",
   "documentation": "https://www.home-assistant.io/integrations/connector",
   "requirements": [],
   "ssdp": [],

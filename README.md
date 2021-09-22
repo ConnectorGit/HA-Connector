@@ -16,3 +16,4 @@
 
 Note:
 1) One way blind only support open close and stop
+2) Please click five consecutive times on the about page to get the key
